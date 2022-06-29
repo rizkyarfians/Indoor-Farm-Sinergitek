@@ -6,7 +6,6 @@ header("Content-type:application/json");
 
 $result = mysqli_query($conn, "SELECT device_id, ROUND(AVG(suhu_udara),2) AS avgSuhu, ROUND(AVG(kelembapan_udara),2) AS avgKelembapan, ROUND(AVG(tds),2) AS avgTds, ROUND(AVG(ec),2) AS avgEc, ROUND(AVG(intensitas_cahaya),2) as avgIntensitasCahaya, HOUR(time) as hh, DATE(time) as dd  FROM data_sensor_indoor WHERE DATE_SUB(time, INTERVAL 1 HOUR) GROUP BY hh");
 $row = mysqli_fetch_assoc($result);
-var_dump($row);
 $rows = array();
 if(mysqli_num_rows($result)>0){
     while($row = mysqli_fetch_assoc($result)){
