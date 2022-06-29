@@ -13,7 +13,7 @@ void sendDataSensor(){
   val["ec"] = ecSensorRead();
   serializeJson(val,jsonVal);
   String Link;
-  Link = "http://192.168.0.127/api-mbkm/create.php";
+  Link = "http://192.168.0.127/api-mbkm/indoor/sensor-insert.php";
   HTTPClient http;
   http.begin(Link);
   http.addHeader("Content-Type", "application/json");   

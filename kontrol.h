@@ -2,14 +2,14 @@
 #include<ArduinoJson.h>
 #include <HTTPClient.h>
 
-const char* ntpServer = "id.pool.ntp.org";
+const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 21600;
 const int   daylightOffset_sec = 3600;
-const int relayLED = 4;
-const int relayPompa = 2;
+const int relayLED = 2;
+const int relayPompa = 4;
 
 
-///=======BTS7960=======/
+///=======BTS7960=======/                                 
 int Rpwm = 12;
 int Lpwm = 13;
 int Ren = 14;
@@ -77,9 +77,13 @@ void BTS7960_OFF () {
 
 void timerRelay() {
   struct tm timeinfo;
+  StaticJsonDocument<200> control;
+  String jsonKontrol;
   if (!getLocalTime(&timeinfo)) {
     Serial.println("Failed to obtain time");
+    control["get_time"] = "failed";
     return;
+    
   }
   char timeHour[3];
   char minutes[3];
@@ -87,41 +91,42 @@ void timerRelay() {
   strftime(minutes, 3, "%M", &timeinfo);
   String jam = String(timeHour);
   String menit = String(minutes);
-  StaticJsonDocument<200> control;
-  String jsonKontrol;
+  
   control["device_id"] = "hidro-1";
   control["pompa_air"] = true;
-  if (jam.toInt() >= 6 && jam.toInt() <= 15) {
-    digitalWrite(relayLED, HIGH);
+  control["get_time"] = "success";
+  control["menit"] = menit;
+  control["jam"] = jam;
+  if(jam.toInt() >= 6 && jam.toInt() <= 15) {
+    digitalWrite(relayLED, LOW);
     BTS7960_ON();
     control["led"] = true;
     control["kipas"] = 255;
+    control["menit"] = menit.toInt();
+    control["jam"] = jam.toInt();
   }
-  
   else {
     BTS7960_OFF();
-    digitalWrite(relayLED, LOW);
+      digitalWrite(relayLED, HIGH);
     control["led"] = false;
     control["kipas"] = 0;
     control["pompa_a"] = false;
     control["pompa_b"] = false;
   }
-  if((jam.toInt() == 6 && menit.toInt() == 0)  || (jam.toInt() == 16 && menit.toInt() == 0)){
+  if((jam.toInt() == 10 && menit.toInt() == 30)  || (jam.toInt() == 15 && menit.toInt() == 30)){
       pumpABMix();
       control["pompa_a"] = true;
       control["pompa_b"] = true;
    }
   serializeJson(control,jsonKontrol);
   String Link;
-  Link = "http://192.168.0.127/api-mbkm/create_kontrol.php";
+  Link = "http://192.168.0.127/api-mbkm/indoor/kontrol-insert.php";
   HTTPClient http;
   http.begin(Link);
   http.addHeader("Content-Type", "application/json");   
   int httpResponse = http.POST(jsonKontrol);
   if(httpResponse > 0){
     String response = http.getString();
-    Serial.println(response);
-    Serial.println(httpResponse);
   }
   
   Serial.println(httpResponse);
